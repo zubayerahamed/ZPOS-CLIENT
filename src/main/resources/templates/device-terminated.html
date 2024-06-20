@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<title th:text="${pageTitle}">Device Terminated</title>
+	<meta th:remove="tag" th:include="commons :: common-meta"/>
+	<meta th:remove="tag" th:include="commons :: common-css"/>
+	<meta th:remove="tag" th:include="commons :: common-js"/>
+</head>
+
+<body>
+
+	<!-- Page content -->
+	<div class="page-content">
+
+		<!-- Main content -->
+		<div class="content-wrapper">
+
+			<!-- Inner content -->
+			<div class="content-inner">
+
+				<!-- Content area -->
+				<div class="content d-flex justify-content-center align-items-center">
+
+					<a class="basePath" th:href="@{/}"></a>
+
+					<!-- Login form -->
+					<div class="main-form-container">
+						<form id="mainform" class="login-form" role="form" th:action="@{/registerkey}" method="post" autocomplete="off">
+							<div class="card mb-0">
+								<div class="card-body">
+									<div class="text-center mb-3">
+										<div class="d-inline-flex align-items-center justify-content-center mb-4 mt-2">
+											<!-- <img th:src="@{/login-assets/images/logo.png}" class="h-48px" alt=""> -->
+											<h1 class="m-0 p-0">ZPOS</h1>
+										</div>
+										<h5 class="mb-0">Your Device is Terminated</h5>
+									</div>
+									<div class="mb-3 text-center" style="font-size: 10px;">
+										<span th:text="${'Version - ' + appVersion}"></span>
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+					<!-- /login form -->
+
+				</div>
+				<!-- /content area -->
+
+			</div>
+			<!-- /inner content -->
+
+		</div>
+		<!-- /main content -->
+
+	</div>
+	<!-- /page content -->
+
+	<div th:remove="tag" th:include="commons :: modal-section"></div>
+
+	<div th:remove="tag" th:include="commons :: notification-section"></div>
+
+	<script type="text/javascript">
+		$(document).ready(function(){
+			kit.ui.init();
+
+			$('.btn-submit').off('click').on('click', function(e){
+				e.preventDefault();
+				submitMainForm();
+			});
+
+		})
+	</script>
+
+</body>
+</html>
