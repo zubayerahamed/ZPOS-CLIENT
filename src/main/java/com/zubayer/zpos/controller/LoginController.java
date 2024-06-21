@@ -60,9 +60,14 @@ public class LoginController extends BaseController {
 			log.error(e.getMessage());
 		}
 		if(term != null) {
-			if(!term.getXdevice().equals(DeviceUtil.getDeviceId())) {
+			if(term.getXdevice() == null || !term.getXdevice().equals(DeviceUtil.getDeviceId())) {
 				model.addAttribute("pageTitle", "Device Terminated");
 				log.debug("Device terminated. Device key not matched ", new Date());
+
+				// remove business and terminal info
+				businessRepo.delete(businesses.get(0));
+				terminalRepo.delete(terminal);
+
 				return DEVICE_TERMINATED;
 			}
 		}
