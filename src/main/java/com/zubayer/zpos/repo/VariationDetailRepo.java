@@ -1,5 +1,7 @@
 package com.zubayer.zpos.repo;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,4 +15,5 @@ import com.zubayer.zpos.entity.pk.VariationDetailPK;
 @Repository
 public interface VariationDetailRepo extends JpaRepository<VariationDetail, VariationDetailPK>{
 
+	List<VariationDetail> findAllByZidAndXcode(Integer zid, Integer xcode);
 }

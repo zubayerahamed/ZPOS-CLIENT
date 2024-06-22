@@ -1,6 +1,9 @@
 kit.pos = kit.pos || {};
+kit.pos.colors = ['#000000', '#0d6efd', '#dc3545', '#198754', '#0dcaf0'];
 
-// DATA FETCHER
+/** =======================================
+ * =========== DATA FETCHER ===============
+======================================= */ 
 kit.pos.amountWithCurrency = function(amount){
 	var xsign = $('#shopCurrencySign').val();
 	var xposition = $('#shopCurrencyPosition').val();
@@ -31,16 +34,19 @@ kit.pos.dataFetcher = function(controllerUrl, callbackFunc){
 	});
 }
 
-// CATEGORY
+/** =======================================
+ * =============== CATEGORY ===============
+======================================= */ 
 kit.pos.category = kit.pos.category || {};
 
 kit.pos.category = function(){
-	kit.pos.dataFetcher('/OP80/category/all', kit.pos.category.constructMenu);
+	kit.pos.dataFetcher('/OP80/category/all', kit.pos.category.constructCategoryMenu);
 }
 
-kit.pos.category.constructMenu = function(data){
-	console.log("Constracting Category Menu ====> ");
-	var categoryList = data;
+kit.pos.category.constructCategoryMenu = function(data){
+	//console.log("Constracting Category Menu ====> ");
+	var categoryList = data.childs;
+	if(categoryList == null || categoryList.length == 0) return;
 
 	var category_ul = $('.category-ul');
 	category_ul.children("li.nav-item").remove();
@@ -57,11 +63,31 @@ kit.pos.category.constructMenu = function(data){
 				'</li>';
 	category_ul.append(li_el);
 
+	// if has parent to go back from sub menu
+	if(data.parent != null && data.parent != ''){
+
+		categoryAll = {
+			'xname' : 'Back',
+			'xcode' : data.parent
+		}
+
+		dJSON = JSON.stringify(categoryAll);
+
+		li_el = '<li class="nav-item" onclick=\'kit.pos.category.onclickitem(' + dJSON + ')\'>' +
+					'<a href="#" class="nav-link" style="color: '+ kit.pos.colors[data.parentIndex - 1] +'">' +
+						'<i class="ph-plus-circle me-2"></i> ' + categoryAll.xname
+					'</a>' + 
+				'</li>';
+		category_ul.append(li_el);
+
+		if(data.parentindex == 2) textColor = 'text-primary';
+	}
+
 	$.each(categoryList, function(i, d){
 		dJSON = JSON.stringify(d);
 
 		li_el = '<li class="nav-item" onclick=\'kit.pos.category.onclickitem(' + dJSON + ')\'>' +
-					'<a href="#" class="nav-link">' +
+					'<a href="#" class="nav-link" style="color: '+ kit.pos.colors[data.parentIndex] +'">' +
 						'<i class="ph-plus-circle me-2"></i> ' + d.xname
 					'</a>' + 
 				'</li>';
@@ -71,13 +97,19 @@ kit.pos.category.constructMenu = function(data){
 }
 
 kit.pos.category.onclickitem = function(data){
-	console.log('Category '+ data.xname +' clicked');
+	//console.log('Category '+ data.xname +' clicked');
 	kit.pos.item(data.xcode);
+	kit.pos.dataFetcher('/OP80/category/' + data.xcode, kit.pos.category.constructCategoryMenu);
 }
 
 
 
-// ITEM
+
+/** =======================================
+ * =============== ITEM ===================
+======================================= */ 
+kit.pos.item = kit.pos.item || {};
+
 kit.pos.item = function(xcode){
 	console.log("Constracting Item Showcase based on "+ xcode +" category ====> ");
 	kit.pos.dataFetcher('/OP80/item/' + xcode, kit.pos.item.constructItem);
@@ -92,10 +124,25 @@ kit.pos.item.constructItem = function(data){
 	itemContainer.children(".item-box").remove();
 
 	$.each(itemList, function(i, d){
-		var itemBox = '<div class="col-md-4 col-sm-4 p-1 item-box">' +
+
+		var source = '/assets/images/placeholder.png';
+		if(d.imageBase64 != null && d.imageBase64 != ''){
+			source = "data:image/png;base64," + d.imageBase64;
+		}
+
+		var dJSON = JSON.stringify({
+			"itemName" : d.xname.replace(/'/g, ""), 
+			"variationDetails" : 'Something now happen', 
+			"qty" : 1, 
+			"price": d.xprice, 
+		});
+		
+		console.log(dJSON);
+
+		var itemBox = 	'<div class="col-md-4 col-sm-4 p-1 item-box" onclick=\'kit.pos.cart.addItem(' + dJSON + ')\'>' +
 							'<div class="item-box bg-white border border-secondary rounded-1 p-2">' + 
 								'<div class="p-3">' + 
-									'<img src="/assets/images/placeholder.png" class="img-fluid rounded"/>' + 
+									'<img src="'+ source +'" class="img-fluid rounded" width="100%"/>' + 
 								'</div>' +
 								'<h6 class="p-0 m-0 text-primary text-center">' + d.xname + '</h6>' +
 								'<p class="p-0 m-0 text-center">'+ kit.pos.amountWithCurrency(d.xprice) +'</p>' + 
@@ -106,11 +153,80 @@ kit.pos.item.constructItem = function(data){
 }
 
 
-// INIT
+/** =======================================
+ * =============== CART ===================
+======================================= */ 
+kit.pos.cart = kit.pos.cart || {};
+
+kit.pos.cart = function(){
+	$('.cart-table tbody').empty();
+
+	var emptyRow = `
+		<tr class="no-item-row">
+			<td colspan="3" class="text-center">No Item added</td>
+		</tr>
+	`;
+
+	$('.cart-table tbody').append(emptyRow);
+}
+
+/** SAMPLE of Parameter
+ 	"itemName" : d.xname, 
+	"variationDetails" : 'Something now happen', 
+	"qty" : 1, 
+	"price": d.xprice, 
+ */
+kit.pos.cart.addItem = function(data){
+	console.log({data});
+
+	$('.cart-table tbody tr.no-item-row').remove()
+
+	var row = `
+		<tr>
+			<td scope="row" class="p-0">
+				<div class="d-flex justify-content-start align-items-center">
+					<div class="p-2">
+						<i class="ph-trash text-danger"></i>
+					</div>
+					<div class="flex-fill">
+						<p class="m-0 text-primary fs-6">`+ data.itemName +`</p>
+						<p class="m-0 fw-light">`+ data.variationDetails +`</p>
+					</div>
+				</div>
+			</td>
+			<td class="text-center p-1">
+				<div class="input-group w-lg-60 m-auto">
+					<button type="button" class="btn btn-sm btn-light btn-icon" onclick="this.parentNode.querySelector('input[type=number]').stepDown()">
+						<i class="ph-minus ph-sm"></i>
+					</button>
+					<input class="form-control form-control-sm form-control-number text-center numeric-only" type="number" name="number" value="`+ data.qty +`" min="1" step="1">
+					<button type="button" class="btn btn-sm btn-light btn-icon" onclick="this.parentNode.querySelector('input[type=number]').stepUp()">
+						<i class="ph-plus ph-sm"></i>
+					</button>
+				</div>
+				<div class="mt-1">
+					<p class="m-0">Price `+ data.price +` TK</p>
+				</div>
+			</td>
+			<td class="text-center p-1">
+				`+ (data.qty * data.price) +`
+			</td>
+		</tr>
+	`;
+
+	$('.cart-table tbody').append(row);
+}
+
+
+
+/** =======================================
+ * =============== INIT ===================
+======================================= */ 
 kit.pos.init = function(){
 	console.log("Init pos ====> ");
 	kit.pos.category();
 	kit.pos.item('ALL');
+	kit.pos.cart();
 }
 
 

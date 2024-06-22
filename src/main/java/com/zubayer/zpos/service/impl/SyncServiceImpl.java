@@ -15,6 +15,9 @@ import com.zubayer.zpos.entity.Category;
 import com.zubayer.zpos.entity.Charge;
 import com.zubayer.zpos.entity.Currency;
 import com.zubayer.zpos.entity.Item;
+import com.zubayer.zpos.entity.ItemAddons;
+import com.zubayer.zpos.entity.ItemSets;
+import com.zubayer.zpos.entity.ItemVariations;
 import com.zubayer.zpos.entity.Outlet;
 import com.zubayer.zpos.entity.Shop;
 import com.zubayer.zpos.entity.Terminal;
@@ -30,7 +33,10 @@ import com.zubayer.zpos.repo.AddOnsRepo;
 import com.zubayer.zpos.repo.CategoryRepo;
 import com.zubayer.zpos.repo.ChargeRepo;
 import com.zubayer.zpos.repo.CurrencyRepo;
+import com.zubayer.zpos.repo.ItemAddonsRepo;
 import com.zubayer.zpos.repo.ItemRepo;
+import com.zubayer.zpos.repo.ItemSetsRepo;
+import com.zubayer.zpos.repo.ItemVariationsRepo;
 import com.zubayer.zpos.repo.OutletRepo;
 import com.zubayer.zpos.repo.ShopRepo;
 import com.zubayer.zpos.repo.TerminalRepo;
@@ -93,6 +99,9 @@ public class SyncServiceImpl implements SyncService {
 	private XtableRepo tableRepo;
 	@Autowired
 	private CurrencyRepo currencyRepo;
+	@Autowired private ItemVariationsRepo itemVariationsRepo;
+	@Autowired private ItemAddonsRepo itemAddonsRepo;
+	@Autowired private ItemSetsRepo itemSetsRepo;
 
 	@Transactional
 	@Override
@@ -135,7 +144,7 @@ public class SyncServiceImpl implements SyncService {
 			// now send this sync info to server through api, that will help both side
 			// communication
 
-			// Termninal sync
+			// Shop sync
 			String shopDataUrl = appConfig.getApiUrl() + "/possync/shop?businessid=" + business + "&outletid=" + outlet + "&shopid=" + shop;
 			Shop xshop = restTemplate.getForObject(shopDataUrl, Shop.class);
 			// update data to db
@@ -171,8 +180,7 @@ public class SyncServiceImpl implements SyncService {
 			// now send this sync info to server through api, that will help both side
 			// communication
 
-			// xusers
-			// xusers
+			// POS Users
 			String xusersDataUrl = appConfig.getApiUrl() + "/possync/posusers?businessid=" + business + "&outletid=" + outlet + "&shopid=" + shop;
 			List<Xusers> xusersList = restTemplate
 					.exchange(xusersDataUrl, HttpMethod.GET, null, new ParameterizedTypeReference<List<Xusers>>() {
@@ -276,6 +284,31 @@ public class SyncServiceImpl implements SyncService {
 			if (items != null && !items.isEmpty()) {
 				itemRepo.saveAll(items);
 			}
+
+			// Item Variations
+			List<ItemVariations> itemVariations = restTemplate.exchange(appConfig.getApiUrl() + "/possync/item-variations?businessid=" + business,
+					HttpMethod.GET, null, new ParameterizedTypeReference<List<ItemVariations>>() {
+					}).getBody();
+			if (itemVariations != null && !itemVariations.isEmpty()) {
+				itemVariationsRepo.saveAll(itemVariations);
+			}
+
+			// Item AddOns
+			List<ItemAddons> itemAddons = restTemplate.exchange(appConfig.getApiUrl() + "/possync/item-addons?businessid=" + business,
+					HttpMethod.GET, null, new ParameterizedTypeReference<List<ItemAddons>>() {
+					}).getBody();
+			if (itemAddons != null && !itemAddons.isEmpty()) {
+				itemAddonsRepo.saveAll(itemAddons);
+			}
+
+			// Item Sets
+			List<ItemSets> itemSets = restTemplate.exchange(appConfig.getApiUrl() + "/possync/item-sets?businessid=" + business,
+					HttpMethod.GET, null, new ParameterizedTypeReference<List<ItemSets>>() {
+					}).getBody();
+			if (itemSets != null && !itemSets.isEmpty()) {
+				itemSetsRepo.saveAll(itemSets);
+			}
+
 		} catch (Exception e) {
 			log.error("Error is : {}", e.getMessage());
 		}

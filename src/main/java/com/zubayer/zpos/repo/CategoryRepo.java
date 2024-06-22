@@ -16,4 +16,5 @@ import com.zubayer.zpos.entity.pk.CategoryPK;
 public interface CategoryRepo extends JpaRepository<Category, CategoryPK> {
 
 	List<Category> findAllByZid(Integer zid);
+	List<Category> findAllByZidAndXpcode(Integer zid, Integer xpcode);
 }

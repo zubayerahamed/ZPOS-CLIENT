@@ -44,7 +44,7 @@ public class LicenseCheckerSchedular {
 	@Autowired
 	private RestTemplate restTemplate;
 
-	@Scheduled(cron = "0 */1 * * * *")
+	@Scheduled(cron = "0 */5 * * * *")
 	private void validatePOS() {
 		log.info("Checking License at : " + new Date());
 
