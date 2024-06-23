@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.zubayer.zpos.entity.AddOns;
+import com.zubayer.zpos.entity.Charge;
 import com.zubayer.zpos.entity.Item;
 import com.zubayer.zpos.entity.ItemAddons;
 import com.zubayer.zpos.entity.ItemSets;
@@ -15,10 +16,12 @@ import com.zubayer.zpos.entity.UOM;
 import com.zubayer.zpos.entity.Variation;
 import com.zubayer.zpos.entity.VariationDetail;
 import com.zubayer.zpos.entity.pk.AddOnsPK;
+import com.zubayer.zpos.entity.pk.ChargePK;
 import com.zubayer.zpos.entity.pk.ItemPK;
 import com.zubayer.zpos.entity.pk.UOMPK;
 import com.zubayer.zpos.entity.pk.VariationPK;
 import com.zubayer.zpos.repo.AddOnsRepo;
+import com.zubayer.zpos.repo.ChargeRepo;
 import com.zubayer.zpos.repo.ItemAddonsRepo;
 import com.zubayer.zpos.repo.ItemRepo;
 import com.zubayer.zpos.repo.ItemSetsRepo;
@@ -43,11 +46,13 @@ public class ItemServiceImpl extends AbstractService implements ItemService {
 	@Autowired private AddOnsRepo addonsRepo;
 	@Autowired private ItemRepo itemRepo;
 	@Autowired private UOMRepo uomRepo;
+	@Autowired private ChargeRepo chargeRepo;
 
 	@Override
 	public Item constructWithDetailData(Item item) {
 		if(item == null || item.getXcode() == null) return item;
 
+		// variations
 		List<ItemVariations> variations = itemVariationsRepo.findAllByZidAndXitem(sessionManager.getBusinessId(), item.getXcode());
 		item.setVariations(variations);
 		variations.stream().forEach(v -> {
@@ -58,6 +63,7 @@ public class ItemServiceImpl extends AbstractService implements ItemService {
 			v.setOptions(options);
 		});
 
+		// addons
 		List<ItemAddons> addons = itemAddonsRepo.findAllByZidAndXitem(sessionManager.getBusinessId(), item.getXcode());
 		item.setAddons(addons);
 		addons.stream().forEach(a -> {
@@ -68,6 +74,7 @@ public class ItemServiceImpl extends AbstractService implements ItemService {
 			}
 		});
 
+		// sets
 		List<ItemSets> sets = itemSetsRepo.findAllByZidAndXitem(sessionManager.getBusinessId(), item.getXcode());
 		item.setSets(sets);
 		sets.stream().forEach(s -> {
@@ -78,6 +85,19 @@ public class ItemServiceImpl extends AbstractService implements ItemService {
 				if(uomOp.isPresent()) s.setSetItemUnit(uomOp.get().getXname());
 			}
 		});
+
+		// vat
+		Optional<Charge> vatOp = chargeRepo.findById(new ChargePK(sessionManager.getBusinessId(), item.getXvat()));
+		if(vatOp.isPresent()) {
+			item.setVat(vatOp.get().getXrate());
+		}
+
+		// sd
+		Optional<Charge> sdOp = chargeRepo.findById(new ChargePK(sessionManager.getBusinessId(), item.getXsd()));
+		if(sdOp.isPresent()) {
+			item.setSd(vatOp.get().getXrate());
+		}
+
 
 		return item;
 	}

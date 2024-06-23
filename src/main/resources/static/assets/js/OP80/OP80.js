@@ -131,13 +131,18 @@ kit.pos.item.constructItem = function(data){
 		}
 
 		var dJSON = JSON.stringify({
-			"itemName" : d.xname.replace(/'/g, ""), 
-			"variationDetails" : 'Something now happen', 
-			"qty" : 1, 
-			"price": d.xprice, 
+			xcode : d.xcode,
+			xname : d.xname.replace(/'/g, ""),
+			xprice : d.xprice,
+			xsetmenu: d.xsetmenu,
+			sets : d.sets,
+			variations: d.variations,
+			addons : d.addons, 
+			vat : d.vat,
+			sd : d.sd,
 		});
-		
-		console.log(dJSON);
+
+		//console.log(dJSON);
 
 		var itemBox = 	'<div class="col-md-4 col-sm-4 p-1 item-box" onclick=\'kit.pos.cart.addItem(' + dJSON + ')\'>' +
 							'<div class="item-box bg-white border border-secondary rounded-1 p-2">' + 
@@ -171,10 +176,15 @@ kit.pos.cart = function(){
 }
 
 /** SAMPLE of Parameter
- 	"itemName" : d.xname, 
-	"variationDetails" : 'Something now happen', 
-	"qty" : 1, 
-	"price": d.xprice, 
+ 	xcode : d.xcode,
+	xname : d.xname.replace(/'/g, ""),
+	xprice : d.xprice,
+	xsetmenu: d.xsetmenu,
+	sets : d.sets,
+	variations: d.variations,
+	addons : d.addons, 
+	vat : d.vat,
+	sd : d.sd,
  */
 kit.pos.cart.addItem = function(data){
 	console.log({data});
@@ -189,8 +199,8 @@ kit.pos.cart.addItem = function(data){
 						<i class="ph-trash text-danger"></i>
 					</div>
 					<div class="flex-fill">
-						<p class="m-0 text-primary fs-6">`+ data.itemName +`</p>
-						<p class="m-0 fw-light">`+ data.variationDetails +`</p>
+						<p class="m-0 text-primary fs-6">`+ data.xname +`</p>
+						<p class="m-0 fw-light">variation details will be here</p>
 					</div>
 				</div>
 			</td>
@@ -199,17 +209,17 @@ kit.pos.cart.addItem = function(data){
 					<button type="button" class="btn btn-sm btn-light btn-icon" onclick="this.parentNode.querySelector('input[type=number]').stepDown()">
 						<i class="ph-minus ph-sm"></i>
 					</button>
-					<input class="form-control form-control-sm form-control-number text-center numeric-only" type="number" name="number" value="`+ data.qty +`" min="1" step="1">
+					<input class="form-control form-control-sm form-control-number text-center numeric-only" type="number" name="number" value="1" min="1" step="1">
 					<button type="button" class="btn btn-sm btn-light btn-icon" onclick="this.parentNode.querySelector('input[type=number]').stepUp()">
 						<i class="ph-plus ph-sm"></i>
 					</button>
 				</div>
 				<div class="mt-1">
-					<p class="m-0">Price `+ data.price +` TK</p>
+					<p class="m-0">Price : `+ kit.pos.amountWithCurrency(data.xprice) +`</p>
 				</div>
 			</td>
 			<td class="text-center p-1">
-				`+ (data.qty * data.price) +`
+				`+ (1 * data.xprice) +`
 			</td>
 		</tr>
 	`;
