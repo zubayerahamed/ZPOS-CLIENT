@@ -140,6 +140,11 @@ kit.pos.item.constructItem = function(data){
 			addons : d.addons, 
 			vat : d.vat,
 			sd : d.sd,
+			qty : 1, 
+			lineamt : d.xprice,
+			removed : false,   // used for maintain the cart array index to identify it is removed from cart after adding
+			gift : false,  // use for maintain gift item
+			takeaway : false,
 		});
 
 		//console.log(dJSON);
@@ -185,18 +190,29 @@ kit.pos.cart = function(){
 	addons : d.addons, 
 	vat : d.vat,
 	sd : d.sd,
+	qty : 1, 
+	lineamt : d.xprice * qty
+	removed : false,
+	gift: false, 
+	takeaway : false
  */
+kit.pos.cart.items = [];
 kit.pos.cart.addItem = function(data){
-	console.log({data});
+	//console.log({data});
 
 	$('.cart-table tbody tr.no-item-row').remove()
 
+	var dataindex = kit.pos.cart.items.length;
+	//console.log(dataindex);
+	kit.pos.cart.items.push(data);
+	//console.log(kit.pos.cart.items);
+
 	var row = `
-		<tr>
+		<tr id="row-`+ dataindex +`">
 			<td scope="row" class="p-0">
 				<div class="d-flex justify-content-start align-items-center">
 					<div class="p-2">
-						<i class="ph-trash text-danger"></i>
+						<i class="ph-trash text-danger" id="delete-row-`+ dataindex +`" data-index="`+ dataindex +`" style="cursor: pointer;"></i>
 					</div>
 					<div class="flex-fill">
 						<p class="m-0 text-primary fs-6">`+ data.xname +`</p>
@@ -206,11 +222,11 @@ kit.pos.cart.addItem = function(data){
 			</td>
 			<td class="text-center p-1">
 				<div class="input-group w-lg-60 m-auto">
-					<button type="button" class="btn btn-sm btn-light btn-icon" onclick="this.parentNode.querySelector('input[type=number]').stepDown()">
+					<button id="qty-dec-`+dataindex+`" data-index="`+ dataindex +`" type="button" class="btn btn-sm btn-light btn-icon">
 						<i class="ph-minus ph-sm"></i>
 					</button>
-					<input class="form-control form-control-sm form-control-number text-center numeric-only" type="number" name="number" value="1" min="1" step="1">
-					<button type="button" class="btn btn-sm btn-light btn-icon" onclick="this.parentNode.querySelector('input[type=number]').stepUp()">
+					<input id="qty-row-` + dataindex + `" class="form-control form-control-sm form-control-number text-center numeric-only" type="number" name="number" value="`+ data.qty +`" min="1" step="1" disabled>
+					<button id="qty-inc-`+dataindex+`" data-index="`+ dataindex +`" type="button" class="btn btn-sm btn-light btn-icon">
 						<i class="ph-plus ph-sm"></i>
 					</button>
 				</div>
@@ -219,13 +235,59 @@ kit.pos.cart.addItem = function(data){
 				</div>
 			</td>
 			<td class="text-center p-1">
-				`+ (1 * data.xprice) +`
+				<span id="lineamt-row-`+ dataindex +`">`+ (1 * data.xprice) +`</span>
+			</td>
+		</tr>
+		<tr>
+			<td class="text-center p-0" colspan="3">
+				<div class="d-flex justify-content-around" style="width: 100%">
+					<a href="">Gift</a>
+					<a href="">Take Away</a>
+				</div>
 			</td>
 		</tr>
 	`;
 
 	$('.cart-table tbody').append(row);
+
+	$('button#qty-inc-' + dataindex).off('click').on('click', function(){
+		var indexnumber = $(this).data('index');
+		var currentQty = kit.pos.cart.items[indexnumber].qty;
+		var newQty = Number(currentQty) + 1;
+		kit.pos.cart.items[indexnumber].qty = newQty;
+		$('#qty-row-' + indexnumber).val(newQty);
+
+		var price = kit.pos.cart.items[indexnumber].xprice;
+		var lineAmt = price * newQty;
+		kit.pos.cart.items[indexnumber].lineamt = lineAmt;
+		$('#lineamt-row-' + indexnumber).html(lineAmt);
+	})
+
+	$('button#qty-dec-' + dataindex).off('click').on('click', function(){
+		var indexnumber = $(this).data('index');
+		var currentQty = kit.pos.cart.items[indexnumber].qty;
+		var newQty = currentQty - 1;
+		if(newQty < 1){
+			$('tr#row-' + indexnumber).remove();
+			kit.pos.cart.items[indexnumber].removed = true;
+			return;
+		}
+		kit.pos.cart.items[indexnumber].qty = newQty;
+		$('#qty-row-' + indexnumber).val(newQty);
+
+		var price = kit.pos.cart.items[indexnumber].xprice;
+		var lineAmt = price * newQty;
+		kit.pos.cart.items[indexnumber].lineamt = lineAmt;
+		$('#lineamt-row-' + indexnumber).html(lineAmt);
+	})
+
+	$('#delete-row-' + dataindex).off('click').on('click', function(){
+		var indexnumber = $(this).data('index');
+		$('tr#row-' + indexnumber).remove();
+		kit.pos.cart.items[indexnumber].removed = true;
+	})
 }
+
 
 
 
