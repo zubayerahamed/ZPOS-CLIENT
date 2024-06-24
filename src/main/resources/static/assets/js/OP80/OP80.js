@@ -241,8 +241,8 @@ kit.pos.cart.addItem = function(data){
 		<tr>
 			<td class="text-center p-0" colspan="3">
 				<div class="d-flex justify-content-around" style="width: 100%">
-					<a href="">Gift</a>
-					<a href="">Take Away</a>
+					<a href="" class="col bg-success text-white"><i class="ph-gift"></i> Gift</a>
+					<a href="" class="col bg-warning text-white"><i class="ph-package"></i> Take Away</a>
 				</div>
 			</td>
 		</tr>
