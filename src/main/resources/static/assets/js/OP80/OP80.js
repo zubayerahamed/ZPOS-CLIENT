@@ -130,9 +130,9 @@ kit.pos.item.constructItem = function(data){
 			source = "data:image/png;base64," + d.imageBase64;
 		}
 
-		var dJSON = JSON.stringify({
+		var pdata = {
 			xcode : d.xcode,
-			xname : d.xname.replace(/'/g, ""),
+			xname : d.xname,
 			xprice : d.xprice,
 			xsetmenu: d.xsetmenu,
 			sets : d.sets,
@@ -145,11 +145,9 @@ kit.pos.item.constructItem = function(data){
 			removed : false,   // used for maintain the cart array index to identify it is removed from cart after adding
 			gift : false,  // use for maintain gift item
 			takeaway : false,
-		});
+		};
 
-		//console.log(dJSON);
-
-		var itemBox = 	'<div class="col-md-4 col-sm-4 p-1 item-box" onclick=\'kit.pos.cart.addItem(' + dJSON + ')\'>' +
+		var itemBox = 	'<div id="item-box-'+ i +'" class="col-md-4 col-sm-4 p-1 item-box">' +
 							'<div class="item-box bg-white border border-secondary rounded-1 p-2">' + 
 								'<div class="p-3">' + 
 									'<img src="'+ source +'" class="img-fluid rounded" width="100%"/>' + 
@@ -159,6 +157,11 @@ kit.pos.item.constructItem = function(data){
 							'</div>' +
 						'</div>';
 		itemContainer.append(itemBox);
+
+		$('#item-box-' + i).off('click').on('click', function(){
+			kit.pos.cart.addItem(pdata);
+		});
+
 	});
 }
 
@@ -198,7 +201,7 @@ kit.pos.cart = function(){
  */
 kit.pos.cart.items = [];
 kit.pos.cart.addItem = function(data){
-	//console.log({data});
+	console.log({data});
 
 	$('.cart-table tbody tr.no-item-row').remove()
 
@@ -214,7 +217,7 @@ kit.pos.cart.addItem = function(data){
 					<div class="p-2">
 						<i class="ph-trash text-danger" id="delete-row-`+ dataindex +`" data-index="`+ dataindex +`" style="cursor: pointer;"></i>
 					</div>
-					<div class="flex-fill">
+					<div class="flex-fill item-desc" data-index="`+dataindex+`">
 						<p class="m-0 text-primary fs-6">`+ data.xname +`</p>
 						<p class="m-0 fw-light">variation details will be here</p>
 					</div>
@@ -238,17 +241,23 @@ kit.pos.cart.addItem = function(data){
 				<span id="lineamt-row-`+ dataindex +`">`+ (1 * data.xprice) +`</span>
 			</td>
 		</tr>
-		<tr>
+		<tr id="row-gift-`+ dataindex +`" class="d-none">
 			<td class="text-center p-0" colspan="3">
 				<div class="d-flex justify-content-around" style="width: 100%">
-					<a href="" class="col bg-success text-white"><i class="ph-gift"></i> Gift</a>
-					<a href="" class="col bg-warning text-white"><i class="ph-package"></i> Take Away</a>
+					<a href="" class="col text-dark gift-btn" data-index="`+ dataindex +`"><i class="ph-gift"></i> Gift</a>
+					<a href="" class="col text-dark take-away-btn" data-index="`+ dataindex +`"><i class="ph-package"></i> Take Away</a>
 				</div>
 			</td>
 		</tr>
 	`;
 
 	$('.cart-table tbody').append(row);
+
+	$('.item-desc').off('click').on('click', function(){
+		console.log('here');
+		var indexnumber = $(this).data('index');
+		$('#row-gift-' + indexnumber).toggleClass('d-none');
+	})
 
 	$('button#qty-inc-' + dataindex).off('click').on('click', function(){
 		var indexnumber = $(this).data('index');
@@ -269,6 +278,7 @@ kit.pos.cart.addItem = function(data){
 		var newQty = currentQty - 1;
 		if(newQty < 1){
 			$('tr#row-' + indexnumber).remove();
+			$('#row-gift-' + indexnumber).remove();
 			kit.pos.cart.items[indexnumber].removed = true;
 			return;
 		}
@@ -284,8 +294,42 @@ kit.pos.cart.addItem = function(data){
 	$('#delete-row-' + dataindex).off('click').on('click', function(){
 		var indexnumber = $(this).data('index');
 		$('tr#row-' + indexnumber).remove();
+		$('#row-gift-' + indexnumber).remove();
 		kit.pos.cart.items[indexnumber].removed = true;
 	})
+
+	$('.gift-btn').off('click').on('click', function(e){
+		e.preventDefault();
+		var indexnumber = $(this).data('index');
+		var isForGift = kit.pos.cart.items[indexnumber].gift;
+		if(isForGift){
+			isForGift = false;
+			$(this).removeClass('bg-success text-white')
+			$(this).addClass('text-dark');
+		} else {
+			isForGift = true;
+			$(this).addClass('bg-success text-white')
+			$(this).removeClass('text-dark');
+		}
+		kit.pos.cart.items[indexnumber].gift = isForGift;
+	});
+
+	$('.take-away-btn').off('click').on('click', function(e){
+		e.preventDefault();
+		var indexnumber = $(this).data('index');
+		var isForGift = kit.pos.cart.items[indexnumber].gift;
+		if(isForGift){
+			isForGift = false;
+			$(this).removeClass('bg-warning text-white')
+			$(this).addClass('text-dark');
+		} else {
+			isForGift = true;
+			$(this).addClass('bg-warning text-white')
+			$(this).removeClass('text-dark');
+		}
+		kit.pos.cart.items[indexnumber].gift = isForGift;
+	});
+
 }
 
 
