@@ -136,20 +136,26 @@ kit.pos.item.constructItem = function(data){
 			xprice : d.xprice,
 			xsetmenu: d.xsetmenu,
 			sets : d.sets,
-			variations: d.variations,
-			addons : d.addons, 
 			vat : d.vat,
 			sd : d.sd,
 			qty : 1, 
 			lineamt : d.xprice,
 			removed : false,   // used for maintain the cart array index to identify it is removed from cart after adding
 			gift : false,  // use for maintain gift item
-			takeaway : false,
+			takeaway : false,   // use for non dine in, takeway,
+			variations: d.variations,
+			addons : d.addons, 
+			selectedVariations : [],   // selected varaitions will be store here
+			selectedVariationsText : "",   // selected variations text will be displayed in cart below item desc
+			selectedAddons : [],  // selected addons will be store here
+			selectedAddonsText : "",  // selected addons description
+			selectedVariationsPrice : 0,
+			selectedAddonsPrice: 0,
 		};
 
-		var itemBox = 	'<div id="item-box-'+ i +'" class="col-md-4 col-sm-4 p-1 item-box">' +
+		var itemBox = 	'<div id="item-box-'+ i +'" class="col-md-3 col-sm-4 p-1 item-box">' +
 							'<div class="item-box bg-white border border-secondary rounded-1 p-2">' + 
-								'<div class="p-3">' + 
+								'<div class="p-1">' + 
 									'<img src="'+ source +'" class="img-fluid rounded" width="100%"/>' + 
 								'</div>' +
 								'<h6 class="p-0 m-0 text-primary text-center">' + d.xname + '</h6>' +
@@ -159,8 +165,16 @@ kit.pos.item.constructItem = function(data){
 		itemContainer.append(itemBox);
 
 		$('#item-box-' + i).off('click').on('click', function(){
-			kit.pos.cart.addItem(pdata);
-			kit.pos.cart.updateTotalTable();
+
+			// variation checker
+			if(pdata.variations.length > 0 || pdata.addons.length > 0){
+				kit.pos.cart.variationmodal(pdata);
+				return;
+			} else {
+				kit.pos.cart.addItem(pdata);
+				kit.pos.cart.updateTotalTable();
+			}
+
 		});
 
 	});
@@ -201,10 +215,98 @@ kit.pos.cart = function(){
 	takeaway : false
  */
 kit.pos.cart.items = [];
+kit.pos.cart.variationmodal = function(data){
+
+	$('#posVariationModal').modal('show');
+
+	var modalBody = $('.variation-modal-body');
+	modalBody.html("");
+
+	// variations
+	if(data.variations.length > 0){
+		var selectedVariations = [];
+
+		$.each(data.variations, function(i, variation){
+
+			var options = "";
+			$.each(variation.options, function(j, option){
+				options += `
+					<div class="col-md-3 p-2 `+ option.xcode +`" id="`+ option.xcode + `-` + option.xrow +`" data-name="`+ option.xname +`" data-price="`+ option.xprice +`">
+						<div class="p-2 text-center text-dark" style="border: 1px solid #059669; border-radius: 8px; cursor: pointer;">
+							<p class="p-0 m-0">`+ option.xname +`</p>
+							<h6 class="p-0 m-0">`+ kit.pos.amountWithCurrency(option.xprice) +`</h6>
+						</div>
+					</div>
+				`;
+			})
+
+			var variationContainer = `
+				<div class="variations-container pb-4">
+					<div class="col-md-12">
+						<h3 class="m-0"> Variation: `+ variation.variationName +`</h3>
+						<div class="row">
+							`+ options +`
+						</div>
+					</div>
+					
+				</div>
+			`;
+
+			modalBody.append(variationContainer);
+
+			// variation selection event
+			console.log(variation);
+			$('.' + variation.xvariation).off('click').on('click', function(e){
+				var opid = $(this).attr('id');
+				var opname = $(this).data('name');
+				var opprice = $(this).data('price');
+
+				selectedVariations[variation.xvariation] = {
+					opid : opid,
+					opname : opname, 
+					opprice : opprice
+				};
+
+				console.log(selectedVariations);
+			})
+
+		});
+
+	}
+
+	// addons
+	if(data.addons.length > 0){
+		var addons = "";
+		$.each(data.addons, function(i, addon){
+			addons += `
+				<div class="col-md-3 p-2">
+					<div class="p-2 text-center text-dark" style="border: 1px solid #059669; border-radius: 8px; cursor: pointer;">
+						<p class="p-0 m-0">`+ addon.addonsName +`</p>
+						<h6 class="p-0 m-0">`+ kit.pos.amountWithCurrency(addon.addonsPrice) +`</h6>
+					</div>
+				</div>
+			`;
+		});
+
+		var addonsContainer = `
+				<div class="addons-container pb-4">
+					<div class="col-md-12">
+						<h3 class="m-0">Addons</h3>
+						<div class="row">
+							`+ addons +`
+						</div>
+					</div>
+				</div>
+			`;
+
+		modalBody.append(addonsContainer);
+	}
+
+}
 kit.pos.cart.addItem = function(data){
 	console.log({data});
 
-	$('.cart-table tbody tr.no-item-row').remove()
+	$('.cart-table tbody tr.no-item-row').remove();
 
 	var dataindex = kit.pos.cart.items.length;
 	//console.log(dataindex);
